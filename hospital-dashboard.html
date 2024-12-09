@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
     <style>
         :root {
             --primary-color: #2C7BE5;
@@ -18,6 +20,8 @@
             --warning-color: #ffc107;
             --danger-color: #dc3545;
             --sidebar-bg: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
+            --card-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
         }
 
         * {
@@ -32,7 +36,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styles */
         .sidebar {
             position: fixed;
             left: 0;
@@ -40,10 +43,12 @@
             bottom: 0;
             width: var(--sidebar-width);
             background: var(--sidebar-bg);
-            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            box-shadow: var(--card-shadow);
             z-index: 1000;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             color: white;
+            display: flex;
+            flex-direction: column;
         }
 
         .sidebar-header {
@@ -52,7 +57,6 @@
             align-items: center;
             padding: 0 25px;
             background: rgba(255, 255, 255, 0.1);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .sidebar-header .logo {
@@ -63,11 +67,13 @@
         }
 
         .sidebar-header .logo span {
-            color: #4CAF50;
+            color: var(--accent-color);
         }
 
         .nav-menu {
             padding: 20px 0;
+            overflow-y: auto;
+            flex-grow: 1;
         }
 
         .nav-item {
@@ -76,10 +82,22 @@
             align-items: center;
             color: rgba(255, 255, 255, 0.8);
             text-decoration: none;
-            transition: all 0.3s;
+            transition: var(--transition);
             cursor: pointer;
             border-left: 4px solid transparent;
             margin: 4px 0;
+            position: relative;
+        }
+
+        .nav-item i {
+            width: 24px;
+            margin-right: 12px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .nav-item span {
+            font-weight: 500;
         }
 
         .nav-item:hover {
@@ -96,136 +114,73 @@
             padding-left: 30px;
         }
 
-        .nav-item i {
-            width: 24px;
-            margin-right: 12px;
-            font-size: 18px;
+        .notification-badge {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--danger-color);
+            color: white;
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: bold;
         }
 
-        /* Main Content Styles */
+        .nav-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 15px 0;
+        }
+
+        .nav-item.logout {
+            margin-top: auto;
+            color: #ff6b6b;
+        }
+
+        .nav-item.logout:hover {
+            background: rgba(255, 99, 99, 0.1);
+            border-left-color: #ff6b6b;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+        }
+
         .main-content {
             margin-left: var(--sidebar-width);
             padding: 30px;
-            padding-top: calc(var(--header-height) + 30px);
+            min-height: 100vh;
+            background: #f8fafc;
+            transition: var(--transition);
         }
 
-        /* Header Styles */
-        .header {
-            position: fixed;
-            top: 0;
-            left: var(--sidebar-width);
-            right: 0;
-            height: var(--header-height);
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 30px;
-            z-index: 900;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-
-        .notification-bell {
-            position: relative;
-            cursor: pointer;
-            font-size: 20px;
-            color: #555;
-            transition: color 0.3s;
-        }
-
-        .notification-bell:hover {
-            color: var(--primary-color);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: var(--danger-color);
-            color: white;
-            border-radius: 50%;
-            width: 18px;
-            height: 18px;
-            font-size: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .logout-btn {
-            background: var(--danger-color);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
-        }
-
-        .logout-btn:hover {
-            background: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
-        }
-
-        /* Dashboard Content Styles */
-        .welcome-section {
-            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
-            color: white;
-            padding: 40px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            box-shadow: 0 10px 20px rgba(44, 123, 229, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .welcome-section::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 300px;
-            height: 300px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
-            border-radius: 50%;
-            transform: translate(50%, -50%);
-        }
-
-        .welcome-section h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-        }
-
-        .stats-grid {
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 25px;
-            margin-bottom: 30px;
+            margin-top: 30px;
         }
 
         .stat-card {
             background: white;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s;
-            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 20px rgba(0,0,0,0.15);
         }
 
         .stat-card::before {
@@ -235,185 +190,710 @@
             left: 0;
             width: 100%;
             height: 4px;
-            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .stat-card:hover::before {
-            opacity: 1;
-        }
-
-        .stat-card i {
-            font-size: 28px;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            background: rgba(44, 123, 229, 0.1);
-            width: 50px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-        }
-
-        .stat-number {
-            font-size: 28px;
-            font-weight: bold;
-            margin: 10px 0;
-            color: #333;
-        }
-
-        /* Content Sections */
-        .content-section {
-            display: none;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-            animation: fadeIn 0.3s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .content-section.active {
-            display: block;
-        }
-
-        /* Table Styles */
-        .data-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 20px;
-        }
-
-        .data-table th, .data-table td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        .data-table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .data-table tbody tr {
-            transition: all 0.3s;
-        }
-
-        .data-table tbody tr:hover {
-            background: #f8f9fa;
-        }
-
-        /* Button Styles */
-        .btn {
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-view {
             background: var(--primary-color);
-            color: white;
         }
 
-        .btn-contact {
-            background: var(--accent-color);
-            color: white;
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 10px 0;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-
-        /* Chart Container */
         .chart-container {
             background: white;
             padding: 25px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            box-shadow: var(--card-shadow);
             margin-top: 30px;
-            border: 1px solid rgba(0,0,0,0.05);
         }
 
-        /* Support Cards */
-        .support-options {
+        .ai-insights {
+            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 30px;
+        }
+
+        .ai-insights h3 {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .ai-insights i {
+            font-size: 1.5rem;
+        }
+
+        .insight-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .donor-recipient-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 25px;
             margin-top: 30px;
         }
 
-        .support-card {
+        .match-card {
             background: white;
-            padding: 25px;
+            padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s;
-            text-align: center;
-            border: 1px solid rgba(0,0,0,0.05);
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
-        .support-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        .support-card i {
-            font-size: 32px;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            background: rgba(44, 123, 229, 0.1);
-            width: 70px;
-            height: 70px;
+        .match-score {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 20px;
-            margin: 0 auto 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, var(--success-color) 0%, #1e8449 100%);
+            color: white;
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .main-content {
-                margin-left: 0;
-                padding: 20px;
-            }
+        .notification-center {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            z-index: 1000;
+        }
 
-            .header {
-                left: 0;
-            }
+        .floating-action-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+        }
 
-            .sidebar.active {
-                transform: translateX(0);
-            }
+        .floating-action-button:hover {
+            transform: scale(1.1);
+        }
 
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .urgent-card {
+            animation: pulse 2s infinite;
+        }
+
+        /* Section Header Styles */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .section-header h2 {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 24px;
+            color: #2c3e50;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline {
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            background: #f8f9fa;
+            color: #6c757d;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-icon:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* Search and Filter Styles */
+        .search-and-filter {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 300px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .filter-select {
+            padding: 12px 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            min-width: 150px;
+        }
+
+        /* Card Styles */
+        .donor-grid, .recipient-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .donor-card, .recipient-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .donor-card:hover, .recipient-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .donor-status, .urgency-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .donor-status.active {
+            background: #e3fcef;
+            color: #00a854;
+        }
+
+        .urgency-badge {
+            background: #ffe0e0;
+            color: #ff4d4f;
+        }
+
+        .donor-info, .recipient-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .donor-avatar, .recipient-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .donor-details, .recipient-details {
+            flex: 1;
+        }
+
+        .donor-details h3, .recipient-details h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .donor-details p, .recipient-details p {
+            margin: 5px 0;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Table Styles */
+        .data-table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .table-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .table-user img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        .blood-type {
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #e3fcef;
+            color: #00a854;
+        }
+
+        .organ-tags {
+            display: flex;
+            gap: 8px;
+        }
+
+        .organ-tag {
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #e6f7ff;
+            color: #1890ff;
+            font-size: 14px;
+        }
+
+        .organ-tag.urgent {
+            background: #fff2f0;
+            color: #ff4d4f;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-badge.active {
+            background: #e3fcef;
+            color: #00a854;
+        }
+
+        /* Progress Bar Styles */
+        .matching-progress {
+            margin: 20px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Recipient Stats */
+        .recipient-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card.urgent {
+            border-left: 4px solid #ff4d4f;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--primary-color);
+        }
+
+        .stat-info h4 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-trend {
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-trend.up {
+            color: #00a854;
+        }
+
+        .stat-trend.down {
+            color: #ff4d4f;
+        }
+
+        /* Organ Matching Styles */
+        .match-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .match-card.high-priority {
+            border-left: 4px solid #4CAF50;
+        }
+
+        .match-score {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .score-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto;
+        }
+
+        .score-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-circle span {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .match-details {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        .match-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+        }
+
+        /* Reports Styles */
+        .report-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .report-card.wide {
+            grid-column: 1 / -1;
+        }
+
+        .report-filters {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 25px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .date-range {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .date-inputs {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Support Center Styles */
+        .support-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .help-cards {
+            display: grid;
+            gap: 20px;
+        }
+
+        .help-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .help-card i {
+            font-size: 32px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .ticket-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .ticket-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .ticket-status {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .ticket-status.open {
+            background: #4CAF50;
+        }
+
+        .ticket-meta {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Settings Styles */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .settings-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-card h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .setting-toggle {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
         }
     </style>
 </head>
@@ -423,29 +903,42 @@
         <div class="sidebar-header">
             <div class="logo">Life<span>Link</span></div>
         </div>
-        <div class="nav-menu">
-            <a class="nav-item active" onclick="showSection('dashboard')">
-                <i class="fas fa-home"></i> Dashboard
+        <nav class="nav-menu">
+            <a href="#dashboard" class="nav-item active" onclick="showSection('dashboard')">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
             </a>
-            <a class="nav-item" onclick="showSection('donors')">
-                <i class="fas fa-user-plus"></i> Donor Management
+            <a href="#donor-management" class="nav-item" onclick="showSection('donor-management')">
+                <i class="fas fa-user-plus"></i>
+                <span>Donor Management</span>
             </a>
-            <a class="nav-item" onclick="showSection('recipients')">
-                <i class="fas fa-procedures"></i> Recipient Management
+            <a href="#recipient-management" class="nav-item" onclick="showSection('recipient-management')">
+                <i class="fas fa-procedures"></i>
+                <span>Recipient Management</span>
             </a>
-            <a class="nav-item" onclick="showSection('profile')">
-                <i class="fas fa-hospital"></i> Hospital Profile
+            <a href="#organ-matching" class="nav-item" onclick="showSection('organ-matching')">
+                <i class="fas fa-heartbeat"></i>
+                <span>Organ Matching</span>
             </a>
-            <a class="nav-item" onclick="showSection('reports')">
-                <i class="fas fa-chart-bar"></i> Reports
+            <a href="#reports" class="nav-item" onclick="showSection('reports')">
+                <i class="fas fa-file-alt"></i>
+                <span>Reports</span>
             </a>
-            <a class="nav-item" onclick="showSection('analytics')">
-                <i class="fas fa-chart-line"></i> Analytics
+            <a href="#notifications" class="nav-item" onclick="showSection('notifications')">
+                <i class="fas fa-bell"></i>
+                <span>Notifications</span>
+                <span class="notification-badge">3</span>
             </a>
-            <a class="nav-item" onclick="showSection('support')">
-                <i class="fas fa-headset"></i> Support
+            <div class="nav-divider"></div>
+            <a href="#settings" class="nav-item" onclick="showSection('settings')">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
             </a>
-        </div>
+            <a href="#" class="nav-item logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </nav>
     </div>
 
     <!-- Header -->
@@ -470,289 +963,600 @@
         <div id="dashboard" class="content-section active">
             <div class="welcome-section">
                 <h1>Welcome, City General Hospital!</h1>
-                <p>Manage your organ donation and transplant activities efficiently</p>
+                <p>Here's your AI-powered dashboard overview</p>
             </div>
 
-            <div class="stats-grid">
+            <div class="dashboard-grid">
                 <div class="stat-card">
-                    <i class="fas fa-user-plus"></i>
-                    <h3>Registered Donors</h3>
-                    <div class="stat-number">150</div>
-                    <p>Active donors in system</p>
+                    <h3><i class="fas fa-user-plus"></i> Active Donors</h3>
+                    <div class="stat-value">124</div>
+                    <div class="stat-trend positive">↑ 12% from last month</div>
                 </div>
                 <div class="stat-card">
-                    <i class="fas fa-procedures"></i>
-                    <h3>Recipient Requests</h3>
-                    <div class="stat-number">75</div>
-                    <p>Pending requests</p>
+                    <h3><i class="fas fa-procedures"></i> Waiting Recipients</h3>
+                    <div class="stat-value">89</div>
+                    <div class="stat-trend">↓ 5% from last month</div>
                 </div>
-                <div class="stat-card">
-                    <i class="fas fa-heart"></i>
-                    <h3>Successful Matches</h3>
-                    <div class="stat-number">45</div>
-                    <p>Completed transplants</p>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-calendar-check"></i>
-                    <h3>Pending Procedures</h3>
-                    <div class="stat-number">12</div>
-                    <p>Scheduled transplants</p>
+                <div class="stat-card urgent-card">
+                    <h3><i class="fas fa-heartbeat"></i> Urgent Matches</h3>
+                    <div class="stat-value">7</div>
+                    <div class="stat-trend warning">Requires immediate attention</div>
                 </div>
             </div>
 
             <div class="chart-container">
-                <canvas id="donationChart"></canvas>
+                <h3>Organ Availability Heatmap</h3>
+                <div id="heatmapChart"></div>
+            </div>
+
+            <div class="ai-insights">
+                <h3><i class="fas fa-robot"></i> AI Insights</h3>
+                <div class="insight-card">
+                    <h4>Matching Opportunities</h4>
+                    <p>3 potential matches identified for urgent cases based on compatibility analysis</p>
+                </div>
+                <div class="insight-card">
+                    <h4>Trend Analysis</h4>
+                    <p>Kidney donation requests have increased by 15% this quarter</p>
+                </div>
+            </div>
+
+            <div class="donor-recipient-grid">
+                <div class="match-card">
+                    <div class="match-score">98%</div>
+                    <div class="match-details">
+                        <h4>High Priority Match Found</h4>
+                        <p>Donor ID: D-1234 → Recipient ID: R-5678</p>
+                        <p>Organ: Kidney | Blood Type: O+</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Donor Management Section -->
-        <div id="donors" class="content-section">
-            <h2>Donor Management</h2>
-            <div class="search-filters">
-                <div class="form-group">
-                    <input type="text" placeholder="Search donors...">
-                </div>
-                <div class="form-group">
-                    <select>
-                        <option>All Blood Groups</option>
-                        <option>A+</option>
-                        <option>A-</option>
-                        <option>B+</option>
-                        <option>B-</option>
-                        <option>AB+</option>
-                        <option>AB-</option>
-                        <option>O+</option>
-                        <option>O-</option>
-                    </select>
+        <div id="donor-management" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-user-plus"></i> Donor Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Add New Donor</button>
+                    <button class="btn btn-outline"><i class="fas fa-file-export"></i> Export Data</button>
                 </div>
             </div>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Donor ID</th>
-                        <th>Name</th>
-                        <th>Blood Group</th>
-                        <th>Organ Type</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>D001</td>
-                        <td>John Doe</td>
-                        <td>A+</td>
-                        <td>Kidney</td>
-                        <td>Available</td>
-                        <td>
-                            <button class="btn-view">View</button>
-                            <button class="btn-contact">Contact</button>
-                        </td>
-                    </tr>
-                    <!-- Add more donor rows here -->
-                </tbody>
-            </table>
-        </div>
 
-        <!-- Recipient Management Section -->
-        <div id="recipients" class="content-section">
-            <h2>Recipient Management</h2>
-            <div class="search-filters">
-                <div class="form-group">
-                    <input type="text" placeholder="Search recipients...">
+            <div class="search-and-filter">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search donors...">
                 </div>
-                <div class="form-group">
-                    <select>
-                        <option>All Organ Types</option>
+                <div class="filter-group">
+                    <select class="filter-select">
+                        <option>Blood Type</option>
+                        <option>A+</option>
+                        <option>B+</option>
+                        <option>O+</option>
+                        <option>AB+</option>
+                    </select>
+                    <select class="filter-select">
+                        <option>Organ Type</option>
                         <option>Kidney</option>
                         <option>Liver</option>
                         <option>Heart</option>
-                        <option>Lungs</option>
+                    </select>
+                    <select class="filter-select">
+                        <option>Status</option>
+                        <option>Active</option>
+                        <option>Pending</option>
+                        <option>Completed</option>
                     </select>
                 </div>
             </div>
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Request ID</th>
-                        <th>Patient Name</th>
-                        <th>Organ Needed</th>
-                        <th>Urgency</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>R001</td>
-                        <td>Jane Smith</td>
-                        <td>Kidney</td>
-                        <td>High</td>
-                        <td>Waiting</td>
-                        <td>
-                            <button class="btn-view">View</button>
-                            <button class="btn-match">Find Match</button>
-                        </td>
-                    </tr>
-                    <!-- Add more recipient rows here -->
-                </tbody>
-            </table>
+
+            <div class="donor-grid">
+                <div class="donor-card">
+                    <div class="donor-status active">Active</div>
+                    <div class="donor-info">
+                        <img src="https://ui-avatars.com/api/?name=John+Doe" alt="Donor" class="donor-avatar">
+                        <div class="donor-details">
+                            <h3>John Doe</h3>
+                            <p><i class="fas fa-fingerprint"></i> ID: DON-2023-001</p>
+                            <p><i class="fas fa-tint"></i> Blood Type: O+</p>
+                            <p><i class="fas fa-calendar-alt"></i> Age: 35</p>
+                        </div>
+                    </div>
+                    <div class="donor-organs">
+                        <span class="organ-tag">Kidney</span>
+                        <span class="organ-tag">Liver</span>
+                    </div>
+                    <div class="donor-actions">
+                        <button class="btn-icon" title="View Details"><i class="fas fa-eye"></i></button>
+                        <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon" title="Delete"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                <!-- More donor cards... -->
+            </div>
+
+            <div class="data-table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Blood Type</th>
+                            <th>Organs</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>DON-2023-001</td>
+                            <td>
+                                <div class="table-user">
+                                    <img src="https://ui-avatars.com/api/?name=John+Doe" alt="Donor">
+                                    <span>John Doe</span>
+                                </div>
+                            </td>
+                            <td><span class="blood-type">O+</span></td>
+                            <td>
+                                <div class="organ-tags">
+                                    <span class="organ-tag">Kidney</span>
+                                    <span class="organ-tag">Liver</span>
+                                </div>
+                            </td>
+                            <td><span class="status-badge active">Active</span></td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-icon" title="Edit"><i class="fas fa-edit"></i></button>
+                                    <button class="btn-icon" title="Delete"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
-        <!-- Hospital Profile Section -->
-        <div id="profile" class="content-section">
-            <h2>Hospital Profile</h2>
-            <form class="profile-form">
-                <div class="form-group">
-                    <label>Hospital Name</label>
-                    <input type="text" value="City General Hospital" readonly>
+        <!-- Recipient Management Section -->
+        <div id="recipient-management" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-procedures"></i> Recipient Management</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary"><i class="fas fa-plus"></i> Add New Recipient</button>
+                    <button class="btn btn-outline"><i class="fas fa-file-export"></i> Export Data</button>
                 </div>
-                <div class="form-group">
-                    <label>License Number</label>
-                    <input type="text" value="LIC123456" readonly>
+            </div>
+
+            <div class="recipient-stats">
+                <div class="stat-card urgent">
+                    <div class="stat-icon"><i class="fas fa-heartbeat"></i></div>
+                    <div class="stat-info">
+                        <h4>Urgent Cases</h4>
+                        <div class="stat-value">12</div>
+                        <div class="stat-trend up">+2 from last week</div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Contact Email</label>
-                    <input type="email" value="contact@citygeneral.com">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-info">
+                        <h4>Waiting List</h4>
+                        <div class="stat-value">45</div>
+                        <div class="stat-trend down">-5 from last week</div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" value="+1 234 567 8900">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-info">
+                        <h4>Matched</h4>
+                        <div class="stat-value">28</div>
+                        <div class="stat-trend up">+8 this month</div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" value="123 Healthcare Ave, Medical District">
+            </div>
+
+            <div class="recipient-grid">
+                <div class="recipient-card urgent">
+                    <div class="urgency-badge">URGENT</div>
+                    <div class="recipient-info">
+                        <img src="https://ui-avatars.com/api/?name=Jane+Smith" alt="Recipient" class="recipient-avatar">
+                        <div class="recipient-details">
+                            <h3>Jane Smith</h3>
+                            <p><i class="fas fa-fingerprint"></i> ID: REC-2023-001</p>
+                            <p><i class="fas fa-tint"></i> Blood Type: AB+</p>
+                            <p><i class="fas fa-calendar-alt"></i> Waiting since: 3 months</p>
+                        </div>
+                    </div>
+                    <div class="organ-needed">
+                        <h4>Organ Needed</h4>
+                        <span class="organ-tag urgent">Heart</span>
+                    </div>
+                    <div class="matching-progress">
+                        <div class="progress-label">
+                            <span>Matching Progress</span>
+                            <span>75%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="recipient-actions">
+                        <button class="btn btn-primary">Find Match</button>
+                        <button class="btn btn-outline">View Details</button>
+                    </div>
                 </div>
-                <button type="submit" class="btn-update">Update Profile</button>
-            </form>
+            </div>
+        </div>
+
+        <!-- Organ Matching Section -->
+        <div id="organ-matching" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-heartbeat"></i> Organ Matching</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary"><i class="fas fa-sync"></i> Run Auto Match</button>
+                    <button class="btn btn-outline"><i class="fas fa-filter"></i> Filter Matches</button>
+                </div>
+            </div>
+
+            <div class="match-stats">
+                <div class="stat-card highlight">
+                    <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                    <div class="stat-info">
+                        <h4>Potential Matches</h4>
+                        <div class="stat-value">15</div>
+                        <div class="stat-trend up">+3 new matches</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <div class="stat-info">
+                        <h4>Pending Review</h4>
+                        <div class="stat-value">8</div>
+                        <div class="stat-trend">Requires attention</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-handshake"></i></div>
+                    <div class="stat-info">
+                        <h4>Confirmed Matches</h4>
+                        <div class="stat-value">42</div>
+                        <div class="stat-trend up">This year</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="match-grid">
+                <div class="match-card high-priority">
+                    <div class="match-score">
+                        <div class="score-circle">
+                            <svg viewBox="0 0 36 36">
+                                <path d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                                    fill="none"
+                                    stroke="#4CAF50"
+                                    stroke-width="3"
+                                    stroke-dasharray="95, 100"/>
+                            </svg>
+                            <span>95%</span>
+                        </div>
+                        <p>Match Rate</p>
+                    </div>
+                    <div class="match-details">
+                        <div class="donor-info">
+                            <img src="https://ui-avatars.com/api/?name=John+Doe" alt="Donor">
+                            <div>
+                                <h4>Donor</h4>
+                                <p>John Doe</p>
+                                <span class="blood-type">O+</span>
+                            </div>
+                        </div>
+                        <div class="match-arrow">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span class="organ-type">Kidney</span>
+                        </div>
+                        <div class="recipient-info">
+                            <img src="https://ui-avatars.com/api/?name=Jane+Smith" alt="Recipient">
+                            <div>
+                                <h4>Recipient</h4>
+                                <p>Jane Smith</p>
+                                <span class="blood-type">O+</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="match-actions">
+                        <button class="btn btn-primary">Review Match</button>
+                        <button class="btn btn-outline">View Details</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Reports Section -->
         <div id="reports" class="content-section">
-            <h2>Reports</h2>
+            <div class="section-header">
+                <h2><i class="fas fa-chart-bar"></i> Reports & Analytics</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary"><i class="fas fa-download"></i> Export Report</button>
+                    <button class="btn btn-outline"><i class="fas fa-cog"></i> Customize</button>
+                </div>
+            </div>
+
+            <div class="report-grid">
+                <div class="report-card wide">
+                    <h3>Monthly Donation Overview</h3>
+                    <div class="chart-container">
+                        <canvas id="monthlyDonationChart"></canvas>
+                    </div>
+                </div>
+                <div class="report-card">
+                    <h3>Organ Distribution</h3>
+                    <div class="chart-container">
+                        <canvas id="organDistributionChart"></canvas>
+                    </div>
+                </div>
+                <div class="report-card">
+                    <h3>Success Rate</h3>
+                    <div class="chart-container">
+                        <canvas id="successRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <div class="report-filters">
-                <div class="form-group">
+                <div class="date-range">
                     <label>Date Range</label>
-                    <select>
-                        <option>Last 7 days</option>
-                        <option>Last 30 days</option>
-                        <option>Last 3 months</option>
-                        <option>Custom range</option>
+                    <div class="date-inputs">
+                        <input type="date" class="form-control">
+                        <span>to</span>
+                        <input type="date" class="form-control">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <select class="form-control">
+                        <option>All Organs</option>
+                        <option>Kidney</option>
+                        <option>Liver</option>
+                        <option>Heart</option>
+                    </select>
+                    <select class="form-control">
+                        <option>All Status</option>
+                        <option>Completed</option>
+                        <option>In Progress</option>
+                        <option>Cancelled</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label>Report Type</label>
-                    <select>
-                        <option>Donation Summary</option>
-                        <option>Transplant History</option>
-                        <option>Success Rate Analysis</option>
-                    </select>
-                </div>
-            </div>
-            <button class="btn-generate">Generate Report</button>
-            <div class="report-preview">
-                <!-- Report content will be displayed here -->
             </div>
         </div>
 
-        <!-- Analytics Section -->
-        <div id="analytics" class="content-section">
-            <h2>Analytics</h2>
-            <div class="chart-container">
-                <canvas id="analyticsChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Support Section -->
+        <!-- Support Center Section -->
         <div id="support" class="content-section">
-            <h2>Support Center</h2>
-            <div class="support-options">
-                <div class="support-card">
-                    <i class="fas fa-book"></i>
-                    <h3>Documentation</h3>
-                    <p>Access user guides and documentation</p>
+            <div class="section-header">
+                <h2><i class="fas fa-headset"></i> Support Center</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary"><i class="fas fa-plus"></i> New Ticket</button>
+                    <button class="btn btn-outline"><i class="fas fa-book"></i> Knowledge Base</button>
                 </div>
-                <div class="support-card">
-                    <i class="fas fa-ticket-alt"></i>
-                    <h3>Submit Ticket</h3>
-                    <p>Create a support ticket for technical issues</p>
+            </div>
+
+            <div class="support-grid">
+                <div class="quick-help">
+                    <h3>Quick Help</h3>
+                    <div class="help-cards">
+                        <div class="help-card">
+                            <i class="fas fa-book-medical"></i>
+                            <h4>User Guides</h4>
+                            <p>Step-by-step guides for using the platform</p>
+                            <a href="#" class="btn btn-text">Learn More <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                        <div class="help-card">
+                            <i class="fas fa-video"></i>
+                            <h4>Video Tutorials</h4>
+                            <p>Watch tutorials on key features</p>
+                            <a href="#" class="btn btn-text">Watch Now <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                        <div class="help-card">
+                            <i class="fas fa-question-circle"></i>
+                            <h4>FAQs</h4>
+                            <p>Find answers to common questions</p>
+                            <a href="#" class="btn btn-text">View FAQs <i class="fas fa-arrow-right"></i></a>
+                        </div>
+                    </div>
                 </div>
-                <div class="support-card">
-                    <i class="fas fa-phone"></i>
-                    <h3>Contact Support</h3>
-                    <p>24/7 support hotline: +1 800 123 4567</p>
+
+                <div class="ticket-section">
+                    <h3>Recent Tickets</h3>
+                    <div class="ticket-list">
+                        <div class="ticket-card">
+                            <div class="ticket-status open"></div>
+                            <div class="ticket-content">
+                                <h4>System Access Issue</h4>
+                                <p>Unable to access donor records...</p>
+                                <div class="ticket-meta">
+                                    <span><i class="fas fa-clock"></i> 2 hours ago</span>
+                                    <span><i class="fas fa-tag"></i> Technical</span>
+                                </div>
+                            </div>
+                            <div class="ticket-actions">
+                                <button class="btn-icon" title="View"><i class="fas fa-eye"></i></button>
+                                <button class="btn-icon" title="Reply"><i class="fas fa-reply"></i></button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        // Function to switch between sections
-        function showSection(sectionId) {
-            // Hide all sections
-            document.querySelectorAll('.content-section').forEach(section => {
-                section.classList.remove('active');
-            });
-            
-            // Show selected section
-            document.getElementById(sectionId).classList.add('active');
-            
-            // Update section title
-            const titles = {
-                'dashboard': 'Dashboard Overview',
-                'donors': 'Donor Management',
-                'recipients': 'Recipient Management',
-                'profile': 'Hospital Profile',
-                'reports': 'Reports',
-                'analytics': 'Analytics',
-                'support': 'Support Center'
-            };
-            document.getElementById('section-title').textContent = titles[sectionId];
+        <!-- Settings Section -->
+        <div id="settings" class="content-section">
+            <div class="section-header">
+                <h2><i class="fas fa-cog"></i> Settings</h2>
+                <div class="header-actions">
+                    <button class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                </div>
+            </div>
 
-            // Update active nav item
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            event.currentTarget.classList.add('active');
-        }
+            <div class="settings-grid">
+                <div class="settings-card">
+                    <h3><i class="fas fa-hospital"></i> Hospital Profile</h3>
+                    <div class="form-group">
+                        <label>Hospital Name</label>
+                        <input type="text" class="form-control" value="City General Hospital">
+                    </div>
+                    <div class="form-group">
+                        <label>License Number</label>
+                        <input type="text" class="form-control" value="LIC-2023-789">
+                    </div>
+                    <div class="form-group">
+                        <label>Contact Email</label>
+                        <input type="email" class="form-control" value="contact@citygeneral.com">
+                    </div>
+                </div>
 
-        // Initialize Charts
-        document.addEventListener('DOMContentLoaded', function() {
-            // Donation Trends Chart
-            const donationCtx = document.getElementById('donationChart').getContext('2d');
-            new Chart(donationCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                        label: 'Donations',
-                        data: [12, 19, 15, 25, 22, 30],
-                        borderColor: '#2C7BE5',
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'Donation Trends - Last 6 Months'
-                        }
-                    }
+                <div class="settings-card">
+                    <h3><i class="fas fa-bell"></i> Notification Settings</h3>
+                    <div class="setting-toggle">
+                        <label>Email Notifications</label>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label>SMS Alerts</label>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label>Desktop Notifications</label>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-card">
+                    <h3><i class="fas fa-shield-alt"></i> Security Settings</h3>
+                    <div class="form-group">
+                        <label>Change Password</label>
+                        <input type="password" class="form-control" placeholder="Current Password">
+                        <input type="password" class="form-control" placeholder="New Password">
+                        <input type="password" class="form-control" placeholder="Confirm Password">
+                    </div>
+                    <div class="setting-toggle">
+                        <label>Two-Factor Authentication</label>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="notification-center">
+            <div class="floating-action-button">
+                <i class="fas fa-bell"></i>
+            </div>
+        </div>
+
+        <script>
+            // Function to switch between sections
+            function showSection(sectionId) {
+                // Hide all sections
+                document.querySelectorAll('.content-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+                
+                // Show selected section
+                const selectedSection = document.getElementById(sectionId);
+                if (selectedSection) {
+                    selectedSection.classList.add('active');
                 }
+
+                // Update active nav item
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Add active class to clicked nav item
+                const activeNav = document.querySelector(`.nav-item[href="#${sectionId}"]`);
+                if (activeNav) {
+                    activeNav.classList.add('active');
+                }
+            }
+
+            // Add mobile toggle functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const menuToggle = document.createElement('button');
+                menuToggle.className = 'menu-toggle';
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+                document.body.appendChild(menuToggle);
+
+                menuToggle.addEventListener('click', function() {
+                    document.querySelector('.sidebar').classList.toggle('active');
+                });
             });
 
-            // Analytics Chart
-            const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
-            if (analyticsCtx) {
-                new Chart(analyticsCtx, {
-                    type: 'bar',
+            // Initialize AI-powered charts and visualizations
+            document.addEventListener('DOMContentLoaded', function() {
+                // Heatmap configuration
+                const heatmapOptions = {
+                    series: [{
+                        name: 'Organ Availability',
+                        data: [
+                            { x: 'Kidney', y: 'North', value: 20 },
+                            { x: 'Liver', y: 'North', value: 15 },
+                            { x: 'Heart', y: 'North', value: 5 },
+                            { x: 'Kidney', y: 'South', value: 12 },
+                            { x: 'Liver', y: 'South', value: 8 },
+                            { x: 'Heart', y: 'South', value: 3 }
+                        ]
+                    }],
+                    chart: {
+                        height: 350,
+                        type: 'heatmap',
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    colors: ["#008FFB"],
+                    title: {
+                        text: 'Regional Organ Availability'
+                    }
+                };
+
+                const heatmapChart = new ApexCharts(document.querySelector("#heatmapChart"), heatmapOptions);
+                heatmapChart.render();
+
+                // AI Notification System
+                const notificationBtn = document.querySelector('.floating-action-button');
+                notificationBtn.addEventListener('click', function() {
+                    // Show AI-generated notifications
+                    showNotifications();
+                });
+            });
+
+            function showNotifications() {
+                // Implement notification display logic
+            }
+
+            // Initialize Charts
+            document.addEventListener('DOMContentLoaded', function() {
+                // Donation Trends Chart
+                const donationCtx = document.getElementById('donationChart').getContext('2d');
+                new Chart(donationCtx, {
+                    type: 'line',
                     data: {
-                        labels: ['Kidney', 'Liver', 'Heart', 'Lungs', 'Cornea'],
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
                         datasets: [{
-                            label: 'Successful Transplants',
-                            data: [45, 29, 15, 12, 38],
-                            backgroundColor: '#28a745'
+                            label: 'Donations',
+                            data: [12, 19, 15, 25, 22, 30],
+                            borderColor: '#2C7BE5',
+                            tension: 0.4
                         }]
                     },
                     options: {
@@ -760,13 +1564,37 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'Transplant Success by Organ Type'
+                                text: 'Donation Trends - Last 6 Months'
                             }
                         }
                     }
                 });
-            }
-        });
-    </script>
-</body>
+
+                // Analytics Chart
+                const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
+                if (analyticsCtx) {
+                    new Chart(analyticsCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Kidney', 'Liver', 'Heart', 'Lungs', 'Cornea'],
+                            datasets: [{
+                                label: 'Successful Transplants',
+                                data: [45, 29, 15, 12, 38],
+                                backgroundColor: '#28a745'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                title: {
+                                    display: true,
+                                    text: 'Transplant Success by Organ Type'
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+        </script>
+    </body>
 </html>
