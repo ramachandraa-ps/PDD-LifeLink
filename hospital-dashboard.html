@@ -895,6 +895,62 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
+
+        /* Notification Styles */
+        .notification-panel {
+            position: fixed;
+            top: var(--header-height);
+            right: -400px;
+            width: 400px;
+            height: calc(100vh - var(--header-height));
+            background: white;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .notification-panel.active {
+            right: 0;
+        }
+
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background-color: #f0f7ff;
+        }
+
+        .notification-item .time {
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .notification-header h3 {
+            margin: 0;
+        }
+
+        .mark-all-read {
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -904,37 +960,41 @@
             <div class="logo">Life<span>Link</span></div>
         </div>
         <nav class="nav-menu">
-            <a href="#dashboard" class="nav-item active" onclick="showSection('dashboard')">
-                <i class="fas fa-chart-line"></i>
+            <a href="#" class="nav-item" onclick="showSection('dashboard')">
+                <i class="fas fa-home"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="#donor-management" class="nav-item" onclick="showSection('donor-management')">
+            <a href="#" class="nav-item" onclick="showSection('donor-management')">
                 <i class="fas fa-user-plus"></i>
                 <span>Donor Management</span>
             </a>
-            <a href="#recipient-management" class="nav-item" onclick="showSection('recipient-management')">
+            <a href="#" class="nav-item" onclick="showSection('recipient-management')">
                 <i class="fas fa-procedures"></i>
                 <span>Recipient Management</span>
             </a>
-            <a href="#organ-matching" class="nav-item" onclick="showSection('organ-matching')">
+            <a href="#" class="nav-item" onclick="showSection('organ-matching')">
                 <i class="fas fa-heartbeat"></i>
                 <span>Organ Matching</span>
             </a>
-            <a href="#reports" class="nav-item" onclick="showSection('reports')">
-                <i class="fas fa-file-alt"></i>
+            <a href="#" class="nav-item" onclick="showSection('reports')">
+                <i class="fas fa-chart-bar"></i>
                 <span>Reports</span>
             </a>
-            <a href="#notifications" class="nav-item" onclick="showSection('notifications')">
+            <a href="#" class="nav-item notification-button" onclick="toggleNotifications(event)">
                 <i class="fas fa-bell"></i>
                 <span>Notifications</span>
                 <span class="notification-badge">3</span>
             </a>
             <div class="nav-divider"></div>
-            <a href="#settings" class="nav-item" onclick="showSection('settings')">
+            <a href="#" class="nav-item" onclick="showSection('support')">
+                <i class="fas fa-headset"></i>
+                <span>Support Center</span>
+            </a>
+            <a href="#" class="nav-item" onclick="showSection('settings')">
                 <i class="fas fa-cog"></i>
                 <span>Settings</span>
             </a>
-            <a href="#" class="nav-item logout">
+            <a href="#" class="nav-item" onclick="handleLogout()">
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Logout</span>
             </a>
@@ -1457,36 +1517,40 @@
             </div>
         </div>
 
-        <div class="notification-center">
-            <div class="floating-action-button">
-                <i class="fas fa-bell"></i>
+        <!-- Notification Panel -->
+        <div class="notification-panel" id="notificationPanel">
+            <div class="notification-header">
+                <h3>Notifications</h3>
+                <span class="mark-all-read" onclick="markAllRead()">Mark all as read</span>
+            </div>
+            <div id="notificationList">
+                <!-- Notifications will be dynamically added here -->
             </div>
         </div>
 
         <script>
             // Function to switch between sections
             function showSection(sectionId) {
-                // Hide all sections
-                document.querySelectorAll('.content-section').forEach(section => {
-                    section.classList.remove('active');
+                // Hide all sections first
+                const sections = document.querySelectorAll('.content-section');
+                sections.forEach(section => {
+                    section.style.display = 'none';
                 });
-                
-                // Show selected section
+
+                // Show the selected section
                 const selectedSection = document.getElementById(sectionId);
                 if (selectedSection) {
-                    selectedSection.classList.add('active');
+                    selectedSection.style.display = 'block';
                 }
 
-                // Update active nav item
-                document.querySelectorAll('.nav-item').forEach(item => {
+                // Update active state in navigation
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
                     item.classList.remove('active');
+                    if (item.getAttribute('onclick') && item.getAttribute('onclick').includes(sectionId)) {
+                        item.classList.add('active');
+                    }
                 });
-                
-                // Add active class to clicked nav item
-                const activeNav = document.querySelector(`.nav-item[href="#${sectionId}"]`);
-                if (activeNav) {
-                    activeNav.classList.add('active');
-                }
             }
 
             // Add mobile toggle functionality
@@ -1593,6 +1657,184 @@
                             }
                         }
                     });
+                }
+            });
+
+            // Chart Initialization
+            document.addEventListener('DOMContentLoaded', function() {
+                // Monthly Donation Overview Chart
+                const monthlyDonationChart = new Chart(document.getElementById('monthlyDonationChart').getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Donations',
+                            data: [12, 19, 15, 17, 22, 25],
+                            borderColor: '#2C7BE5',
+                            tension: 0.4,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Organ Distribution Chart
+                const organDistributionChart = new Chart(document.getElementById('organDistributionChart').getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Kidney', 'Liver', 'Heart', 'Lungs', 'Others'],
+                        datasets: [{
+                            data: [45, 25, 15, 10, 5],
+                            backgroundColor: ['#2C7BE5', '#4CAF50', '#FFC107', '#FF5722', '#9C27B0']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Success Rate Chart
+                const successRateChart = new Chart(document.getElementById('successRateChart').getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                        datasets: [{
+                            label: 'Success Rate',
+                            data: [85, 88, 92, 95],
+                            backgroundColor: '#4CAF50'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            });
+
+            // Add logout function
+            function handleLogout() {
+                // Clear any stored session data
+                localStorage.removeItem('hospitalSession');
+                sessionStorage.clear();
+                
+                // Redirect to hospital hub page
+                window.location.href = 'hospital-hub.html';
+            }
+
+            // Notification functionality
+            let notifications = [
+                {
+                    id: 1,
+                    message: "New potential donor match found",
+                    time: "10 minutes ago",
+                    unread: true
+                },
+                {
+                    id: 2,
+                    message: "Urgent: Kidney available for recipient #1234",
+                    time: "1 hour ago",
+                    unread: true
+                },
+                {
+                    id: 3,
+                    message: "Monthly donation report is ready",
+                    time: "2 hours ago",
+                    unread: true
+                }
+            ];
+
+            function toggleNotifications(event) {
+                event.preventDefault(); // Prevent default navigation
+                const panel = document.getElementById('notificationPanel');
+                panel.classList.toggle('active');
+                updateNotificationList();
+            }
+
+            function updateNotificationList() {
+                const notificationList = document.getElementById('notificationList');
+                notificationList.innerHTML = '';
+                
+                notifications.forEach(notification => {
+                    const notificationElement = document.createElement('div');
+                    notificationElement.className = `notification-item ${notification.unread ? 'unread' : ''}`;
+                    notificationElement.innerHTML = `
+                        <div class="notification-content">
+                            <p>${notification.message}</p>
+                            <span class="time">${notification.time}</span>
+                        </div>
+                    `;
+                    notificationElement.onclick = () => {
+                        markAsRead(notification.id);
+                        handleNotificationClick(notification);
+                    };
+                    notificationList.appendChild(notificationElement);
+                });
+                
+                // Update notification badge
+                const unreadCount = notifications.filter(n => n.unread).length;
+                const badge = document.querySelector('.notification-badge');
+                badge.textContent = unreadCount;
+                badge.style.display = unreadCount > 0 ? 'block' : 'none';
+            }
+
+            function handleNotificationClick(notification) {
+                // Handle navigation based on notification type
+                if (notification.message.includes('donor match')) {
+                    showSection('organ-matching');
+                } else if (notification.message.includes('report')) {
+                    showSection('reports');
+                } else if (notification.message.includes('recipient')) {
+                    showSection('recipient-management');
+                }
+                
+                // Close notification panel after navigation
+                document.getElementById('notificationPanel').classList.remove('active');
+            }
+
+            function markAsRead(id) {
+                const notification = notifications.find(n => n.id === id);
+                if (notification) {
+                    notification.unread = false;
+                    updateNotificationList();
+                }
+            }
+
+            function markAllRead() {
+                notifications.forEach(notification => notification.unread = false);
+                updateNotificationList();
+            }
+
+            // Close notification panel when clicking outside
+            document.addEventListener('click', function(event) {
+                const panel = document.getElementById('notificationPanel');
+                const notificationButton = document.querySelector('.notification-button');
+                if (!panel.contains(event.target) && !notificationButton.contains(event.target)) {
+                    panel.classList.remove('active');
                 }
             });
         </script>
